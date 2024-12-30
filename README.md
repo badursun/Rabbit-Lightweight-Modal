@@ -2,6 +2,8 @@
 
 A lightweight, customizable modal library for modern web applications. No dependencies, just pure JavaScript.
 
+[View Demo](https://badursun.github.io/Rabbit-Lightweight-Modal/)
+
 ## Features
 
 - 📦 Lightweight and dependency-free
