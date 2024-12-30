@@ -129,6 +129,25 @@ const modal1 = new RabbitModal({
 - Safari (latest)
 - Edge (latest)
 
+## Change History
+
+### v1.1.0 (2024-12-30)
+
+#### Performance Improvements
+- **Event Delegation**
+  - Implemented single event handler for all modal interactions
+  - Optimized button click handling with event delegation
+  - Improved overlay and keyboard event handling
+- **DOM Optimization**
+  - Added DocumentFragment support for better DOM manipulation
+  - Implemented template caching system
+  - Optimized DOM element creation and management
+- **Memory Management**
+  - Enhanced event listener cleanup
+  - Improved reference management
+  - Added circular reference prevention
+  - Better resource cleanup on modal destroy
+
 ## License
 
 MIT License - feel free to use in your projects 🚀

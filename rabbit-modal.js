@@ -55,17 +55,18 @@
       closeOnEscape: true,
       overlay: true,
       overlayColor: "rgba(0, 0, 0, 0.5)",
-      size: "default", // small, default, large, xlarge, cover-page
-      position: "center" // center, top, top-right, top-left, bottom-right, bottom-left, bottom, right, left, left-sidebar, right-sidebar
+      size: "default",
+      position: "center"
     };
+
+    static #templateCache = new Map();
 
     #options;
     #element;
     #isVisible = false;
     #eventListeners = {};
     #zIndex = 0;
-    #handleEscape = null;
-    #handleBackdropClick = null;
+    #documentFragment;
 
     constructor(options = {}) {
       this.#options = { ...RabbitModal.#defaultOptions, ...options };
@@ -99,42 +100,53 @@
     }
 
     #setupEventHandlers() {
-      this.#handleEscape = (e) => {
-        if (e.key === "Escape" && this.#options.closeOnEscape) {
+      const handleModalEvents = (e) => {
+        if (e.type === 'keydown' && e.key === 'Escape' && this.#options.closeOnEscape) {
           this.hide();
+          return;
+        }
+
+        if (e.type === 'click') {
+          if (e.target === this.#element && this.#options.closeOnBackdrop) {
+            this.hide();
+            return;
+          }
+
+          const button = e.target.closest('.rabbit-modal-footer button');
+          if (button) {
+            const buttonKey = button.dataset.key;
+            this.#emit("button", { button: buttonKey });
+            if (this.#options?.stackable !== true) {
+              this.hide();
+            }
+          }
         }
       };
 
-      this.#handleBackdropClick = (e) => {
-        if (e.target === this.#element && this.#options.closeOnBackdrop) {
-          this.hide();
-        }
-      };
+      document.addEventListener("keydown", handleModalEvents);
+      this.#element.addEventListener("click", handleModalEvents);
+
+      this._handleModalEvents = handleModalEvents;
     }
 
     #createModal() {
-      // Create modal container
+      this.#documentFragment = document.createDocumentFragment();
+      
       this.#element = document.createElement("div");
       this.#element.className = "rabbit-modal";
 
-      // Create modal dialog
-      const dialog = document.createElement("div");
-      dialog.className = `rabbit-modal-dialog ${this.#options.size}`;
+      const cacheKey = `${this.#options.size}-${this.#options.position}`;
+      let dialog;
 
-      // Add position class if it's a sidebar
-      if (this.#options.position === 'left-sidebar' || this.#options.position === 'right-sidebar') {
-        dialog.classList.add(this.#options.position);
-      }
-      // Add position class if not a special size and not a sidebar
-      else if (!['cover-page'].includes(this.#options.size)) {
-        dialog.classList.add(this.#options.position);
+      if (RabbitModal.#templateCache.has(cacheKey)) {
+        dialog = RabbitModal.#templateCache.get(cacheKey).cloneNode(true);
+      } else {
+        dialog = this.#createDialogTemplate();
+        RabbitModal.#templateCache.set(cacheKey, dialog.cloneNode(true));
       }
 
-      // Create modal content
-      const content = document.createElement("div");
-      content.className = "rabbit-modal-content";
-
-      // Create header if title exists
+      const content = dialog.querySelector('.rabbit-modal-content');
+      
       if (this.#options.title) {
         const header = document.createElement("div");
         header.className = "rabbit-modal-header";
@@ -142,116 +154,107 @@
         content.appendChild(header);
       }
 
-      // Create body
       const body = document.createElement("div");
       body.className = "rabbit-modal-body";
       body.innerHTML = this.#options.content;
       content.appendChild(body);
 
-      // Create footer if buttons exist
       if (Object.keys(this.#options.buttons).length > 0) {
         const footer = document.createElement("div");
         footer.className = "rabbit-modal-footer";
         
-        for (const [key, button] of Object.entries(this.#options.buttons)) {
+        Object.entries(this.#options.buttons).forEach(([key, button]) => {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = `btn btn-${button.type || "secondary"}`;
           btn.textContent = button.text;
-          btn.onclick = () => {
-            this.#emit("button", { button: key });
-            // Eğer stackable true değilse veya tanımlı değilse modalı kapat
-            if (this.#options?.stackable !== true) {
-              this.hide();
-            }
-          };
+          btn.dataset.key = key; 
           footer.appendChild(btn);
-        }
+        });
         
         content.appendChild(footer);
       }
 
-      dialog.appendChild(content);
       this.#element.appendChild(dialog);
-      document.body.appendChild(this.#element);
+      this.#documentFragment.appendChild(this.#element);
+      document.body.appendChild(this.#documentFragment);
+    }
+
+    #createDialogTemplate() {
+      const dialog = document.createElement("div");
+      dialog.className = `rabbit-modal-dialog ${this.#options.size}`;
+
+      if (this.#options.position === 'left-sidebar' || this.#options.position === 'right-sidebar') {
+        dialog.classList.add(this.#options.position);
+      } else if (!['cover-page'].includes(this.#options.size)) {
+        dialog.classList.add(this.#options.position);
+      }
+
+      const content = document.createElement("div");
+      content.className = "rabbit-modal-content";
+      dialog.appendChild(content);
+
+      return dialog;
     }
 
     show() {
       if (this.#isVisible) return;
 
-      // Show overlay
       if (this.#options.overlay) {
         const overlay = RabbitOverlay.getInstance();
         overlay.setColor(this.#options.overlayColor);
         overlay.incrementCounter();
       }
 
-      // Show modal
       this.#element.classList.add("show");
       this.#element.setAttribute("aria-hidden", "false");
       this.#isVisible = true;
 
-      // Update z-index stack
       RabbitModal.#updateModalStack();
 
-      // Add event listeners
-      document.addEventListener("keydown", this.#handleEscape);
-      this.#element.addEventListener("click", this.#handleBackdropClick);
-
-      // Emit event
       this.#emit("show");
     }
 
     hide() {
       if (!this.#isVisible) return;
 
-      // Remove focus from any focused element inside the modal
       const focusedElement = document.activeElement;
       if (focusedElement && this.#element.contains(focusedElement)) {
         focusedElement.blur();
       }
 
-      // Hide modal
       this.#element.classList.remove("show");
       this.#element.setAttribute("aria-hidden", "true");
       this.#isVisible = false;
       
-      // Hide overlay if this is the last modal
       if (this.#options.overlay) {
         RabbitOverlay.getInstance().decrementCounter();
       }
 
-      // Update z-index stack
       RabbitModal.#updateModalStack();
 
-      // Remove event listeners
-      document.removeEventListener("keydown", this.#handleEscape);
-      this.#element.removeEventListener("click", this.#handleBackdropClick);
-
-      // Emit event
       this.#emit("hide");
 
-      // Clean up
       this.destroy();
     }
 
     destroy() {
-      // Remove from instances
       RabbitModal.#instances.delete(this);
 
-      // Remove element from DOM
-      if (this.#element && this.#element.parentNode) {
+      if (this._handleModalEvents) {
+        document.removeEventListener("keydown", this._handleModalEvents);
+        this.#element?.removeEventListener("click", this._handleModalEvents);
+        this._handleModalEvents = null;
+      }
+
+      if (this.#element?.parentNode) {
         this.#element.parentNode.removeChild(this.#element);
       }
 
-      // Clear event listeners
       this.#eventListeners = {};
-      this.#handleEscape = null;
-      this.#handleBackdropClick = null;
-
-      // Clear references
       this.#element = null;
       this.#options = null;
+      this.#documentFragment = null;
     }
 
     on(event, callback) {
@@ -268,7 +271,6 @@
     }
   }
 
-  // Export for browser and Node.js
   if (typeof module !== "undefined" && module.exports) {
     module.exports = RabbitModal;
   } else {
