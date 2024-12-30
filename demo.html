@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rabbit Lightweight Modal Demo</title>
+    <link rel="stylesheet" href="rabbit-modal.css" />
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --secondary-color: #475569;
+        --border-color: #e2e8f0;
+        --background-color: #f8fafc;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        color: #1e293b;
+        background: var(--background-color);
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 4rem;
+        padding: 2rem;
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        color: var(--secondary-color);
+      }
+
+      .demo-section {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+
+      .demo-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .demo-section p {
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+      }
+
+      .button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      button {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        background: var(--primary-color);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .icon {
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+
+      /* Code block styles */
+      .code-block {
+        background: #1e293b;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1.5rem;
+        overflow-x: auto;
+      }
+
+      .code-block pre {
+        margin: 0;
+        color: #e2e8f0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .code-block .comment {
+        color: #94a3b8;
+      }
+
+      .code-block .string {
+        color: #86efac;
+      }
+
+      .code-block .keyword {
+        color: #93c5fd;
+      }
+
+      .code-block .function {
+        color: #c4b5fd;
+      }
+
+      .code-block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+
+      .code-block-header span {
+        color: #94a3b8;
+        font-size: 0.875rem;
+      }
+
+      .copy-button {
+        background: transparent;
+        border: 1px solid #475569;
+        color: #94a3b8;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 0.25rem;
+      }
+
+      .copy-button:hover {
+        background: #475569;
+        transform: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>🐰 Rabbit Modal</h1>
+        <p>
+          A lightweight, customizable modal library for modern web applications
+        </p>
+      </header>
+
+      <div class="demo-section">
+        <h2>
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 8h16M4 16h16"
+            />
+          </svg>
+          Size Options
+        </h2>
+        <p>Choose from different modal sizes to best fit your content needs.</p>
+        <div class="button-group">
+          <button onclick="showSizeModal('small')">Small</button>
+          <button onclick="showSizeModal('default')">Default</button>
+          <button onclick="showSizeModal('large')">Large</button>
+          <button onclick="showSizeModal('xlarge')">Extra Large</button>
+          <button onclick="showSizeModal('cover-page')">Cover Page</button>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Example Code</span>
+            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code><span class="comment">// Create a new modal with custom size</span>
+<span class="keyword">const</span> <span class="function">modal</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+  title: <span class="string">"Custom Size Modal"</span>,
+  content: <span class="string">"Your content here"</span>,
+  size: <span class="string">"small"</span>, <span class="comment">// small, default, large, xlarge, cover-page</span>
+  buttons: {
+    close: { text: <span class="string">"Close"</span>, type: <span class="string">"secondary"</span> }
+  }
+});
+modal.show();</code></pre>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+          Position Options
+        </h2>
+        <p>
+          Position your modal anywhere on the screen with these pre-defined
+          positions.
+        </p>
+        <div class="button-group">
+          <button onclick="showPositionModal('center')">Center</button>
+          <button onclick="showPositionModal('top')">Top</button>
+          <button onclick="showPositionModal('right')">Right</button>
+          <button onclick="showPositionModal('bottom')">Bottom</button>
+          <button onclick="showPositionModal('left')">Left</button>
+          <button onclick="showPositionModal('top-left')">Top Left</button>
+          <button onclick="showPositionModal('top-right')">Top Right</button>
+          <button onclick="showPositionModal('bottom-left')">
+            Bottom Left
+          </button>
+          <button onclick="showPositionModal('bottom-right')">
+            Bottom Right
+          </button>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Example Code</span>
+            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code><span class="comment">// Create a modal with custom position</span>
+<span class="keyword">const</span> <span class="function">modal</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+  title: <span class="string">"Positioned Modal"</span>,
+  content: <span class="string">"This modal can be positioned anywhere"</span>,
+  position: <span class="string">"top-right"</span>, <span class="comment">// center, top, right, bottom, left, top-left, top-right, bottom-left, bottom-right</span>
+  buttons: {
+    close: { text: <span class="string">"Close"</span>, type: <span class="string">"secondary"</span> }
+  }
+});
+modal.show();</code></pre>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
+          </svg>
+          Sidebar Options
+        </h2>
+        <p>
+          Create sliding sidebar menus that are perfect for navigation and
+          settings panels.
+        </p>
+        <div class="button-group">
+          <button onclick="showSidebarModal('left-sidebar')">
+            Left Sidebar
+          </button>
+          <button onclick="showSidebarModal('right-sidebar')">
+            Right Sidebar
+          </button>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Example Code</span>
+            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code><span class="comment">// Create a sidebar modal</span>
+<span class="keyword">const</span> <span class="function">modal</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+  title: <span class="string">"Sidebar Navigation"</span>,
+  content: <span class="string">"&lt;div class='sidebar-menu'&gt;Your navigation content here&lt;/div&gt;"</span>,
+  position: <span class="string">"left-sidebar"</span>, <span class="comment">// left-sidebar, right-sidebar</span>
+  buttons: {
+    close: { text: <span class="string">"Close"</span>, type: <span class="string">"secondary"</span> }
+  }
+});
+modal.show();</code></pre>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
+          </svg>
+          Overlay Options
+        </h2>
+        <p>
+          Choose from different overlay options to best fit your content needs.
+        </p>
+        <div class="button-group">
+          <button onclick="showOverlayModal('rgba(0, 0, 0, 0.8)')">
+            Dark Overlay
+          </button>
+          <button onclick="showOverlayModal('rgba(255, 255, 255, 0.8)')">
+            Light Overlay
+          </button>
+          <button onclick="showOverlayModal('rgba(0, 0, 255, 0.3)')">
+            Blue Overlay
+          </button>
+          <button onclick="showNoOverlayModal()">No Overlay</button>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Example Code</span>
+            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code><span class="comment">// Create a modal with custom overlay</span>
+<span class="keyword">const</span> <span class="function">modal</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+  title: <span class="string">"Custom Overlay"</span>,
+  content: <span class="string">"Modal with custom overlay color"</span>,
+  overlay: <span class="keyword">true</span>,
+  overlayColor: <span class="string">"rgba(0, 0, 0, 0.8)"</span>,
+  buttons: {
+    close: { text: <span class="string">"Close"</span>, type: <span class="string">"secondary"</span> }
+  }
+});
+modal.show();</code></pre>
+        </div>
+      </div>
+
+      <div class="demo-section">
+        <h2>
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
+          </svg>
+          Stacked Modals
+        </h2>
+        <p>Open multiple modals on top of each other.</p>
+        <div class="button-group">
+          <button onclick="showStackedModals()">Open Stacked Modals</button>
+        </div>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>Example Code</span>
+            <button class="copy-button" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code><span class="comment">// Create multiple stacked modals</span>
+<span class="keyword">const</span> <span class="function">modal1</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+  title: <span class="string">"First Modal"</span>,
+  content: <span class="string">"Click the button to open another modal"</span>,
+  stackable: <span class="keyword">true</span>,
+  buttons: {
+    next: { 
+      text: <span class="string">"Open Next"</span>,
+      onClick: () => {
+        <span class="keyword">const</span> <span class="function">modal2</span> = <span class="keyword">new</span> <span class="function">RabbitModal</span>({
+          title: <span class="string">"Second Modal"</span>,
+          content: <span class="string">"This modal is stacked on top"</span>
+        });
+        modal2.show();
+      }
+    }
+  }
+});
+modal1.show();</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <script src="rabbit-modal.js"></script>
+    <script>
+      function showSizeModal(size) {
+        const modal = new RabbitModal({
+          title: `${size
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")} Modal`,
+          content: `
+            <div style="padding: 1rem 0;">
+              <p>This is a ${size} modal that demonstrates the different size options available.</p>
+              <ul style="list-style: none; padding: 1rem 0;">
+                <li>✨ Customizable sizes</li>
+                <li>🎯 Responsive design</li>
+                <li>🚀 Smooth animations</li>
+              </ul>
+            </div>
+          `,
+          size: size,
+          buttons: {
+            close: { text: "Close", type: "secondary" },
+          },
+        });
+        modal.show();
+      }
+
+      function showPositionModal(position) {
+        const modal = new RabbitModal({
+          title: `${position
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")} Position`,
+          content: `
+            <div style="padding: 1rem 0;">
+              <p>This modal is positioned at the <strong>${position}</strong> of the screen.</p>
+              <p style="margin-top: 1rem">Perfect for notifications, alerts, and context-specific actions.</p>
+            </div>
+          `,
+          position: position,
+          buttons: {
+            close: { text: "Close", type: "secondary" },
+          },
+        });
+        modal.show();
+      }
+
+      function showSidebarModal(position) {
+        const modal = new RabbitModal({
+          title: `${position
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}`,
+          content: `
+            <div style="padding: 1rem 0;">
+              <h3 style="margin-bottom: 1rem">Navigation Menu</h3>
+              <ul style="list-style: none;">
+                <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                  <a href="#" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Home
+                  </a>
+                </li>
+                <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                  <a href="#" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    Products
+                  </a>
+                </li>
+                <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                  <a href="#" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Services
+                  </a>
+                </li>
+                <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                  <a href="#" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    About
+                  </a>
+                </li>
+                <li style="padding: 0.75rem 0;">
+                  <a href="#" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Contact
+                  </a>
+                </li>
+              </ul>
+            </div>
+          `,
+          position: position,
+          size: "default",
+          buttons: {
+            close: { text: "Close", type: "secondary" },
+          },
+        });
+        modal.show();
+      }
+
+      function showOverlayModal(color) {
+        const modal = new RabbitModal({
+          title: "Custom Overlay",
+          content: `This modal has a custom overlay color: ${color}`,
+          overlay: true,
+          overlayColor: color,
+          buttons: {
+            close: { text: "Close", type: "primary" },
+          },
+        });
+        modal.show();
+      }
+
+      function showNoOverlayModal() {
+        const modal = new RabbitModal({
+          title: "No Overlay",
+          content: "This modal has no overlay background.",
+          overlay: false,
+          buttons: {
+            close: { text: "Close", type: "primary" },
+          },
+        });
+        modal.show();
+      }
+
+      async function showStackedModals() {
+        const modal1 = new RabbitModal({
+          title: "First Modal",
+          content:
+            "This is the first modal in the stack. Click the button to add more modals.",
+          buttons: {
+            add: { text: "Add Modal", type: "primary" },
+            close: { text: "Close", type: "secondary" },
+          },
+          stackable: true,
+          size: "small",
+        });
+
+        modal1.show();
+
+        modal1.on("button", async (data) => {
+          if (data.button === "add") {
+            const modal2 = new RabbitModal({
+              title: "Second Modal",
+              content:
+                "This is the second modal. Notice how it stacks on top of the first one.",
+              buttons: {
+                add: { text: "Add One More", type: "primary" },
+                close: { text: "Close", type: "secondary" },
+              },
+              stackable: true,
+              size: "small",
+            });
+
+            modal2.show();
+
+            modal2.on("button", async (data) => {
+              if (data.button === "add") {
+                const modal3 = new RabbitModal({
+                  title: "Third Modal",
+                  content: "This is the third modal in our stack!",
+                  buttons: {
+                    close: { text: "Close All", type: "primary" },
+                  },
+                  stackable: true,
+                  size: "small",
+                });
+
+                modal3.show();
+
+                modal3.on("button", () => {
+                  modal1.hide();
+                  modal2.hide();
+                  modal3.hide();
+                });
+              } else if (data.button === "close") {
+                modal2.hide();
+              }
+            });
+          } else if (data.button === "close") {
+            modal1.hide();
+          }
+        });
+      }
+
+      // Copy code function
+      function copyCode(button) {
+        const codeBlock = button.parentElement.nextElementSibling;
+        const code = codeBlock.textContent;
+
+        navigator.clipboard.writeText(code).then(() => {
+          const originalText = button.textContent;
+          button.textContent = "Copied!";
+          button.style.background = "#10b981";
+          button.style.borderColor = "#10b981";
+          button.style.color = "white";
+
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.style.background = "transparent";
+            button.style.borderColor = "#475569";
+            button.style.color = "#94a3b8";
+          }, 2000);
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,397 @@
+/**
+ * Rabbit Lightweight Modal
+ * Modern, lightweight CSS for modal dialogs
+ */
+
+:root {
+    --rabbit-modal-z-index: 9000;
+    --rabbit-modal-backdrop-bg: rgba(0, 0, 0, 0.5);
+    --rabbit-modal-content-bg: #fff;
+    --rabbit-modal-border-radius: 6px;
+    --rabbit-modal-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --rabbit-modal-header-padding: 12px 16px;
+    --rabbit-modal-body-padding: 16px;
+    --rabbit-modal-footer-padding: 12px 16px;
+    --rabbit-modal-gap: 8px;
+    --rabbit-modal-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Size variants */
+    --rabbit-modal-small: 300px;
+    --rabbit-modal-default: 500px;
+    --rabbit-modal-large: 800px;
+    --rabbit-modal-xlarge: 1140px;
+
+    /* Colors */
+    --rabbit-color-primary: #2563eb;
+    --rabbit-color-primary-hover: #1d4ed8;
+    --rabbit-color-secondary: #4b5563;
+    --rabbit-color-secondary-hover: #374151;
+    --rabbit-color-border: #e5e7eb;
+    --rabbit-color-text: #111827;
+    --rabbit-color-text-secondary: #4b5563;
+}
+
+/* Base modal styles */
+.rabbit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+.rabbit-modal.show {
+    display: block;
+}
+
+/* Overlay */
+.rabbit-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: var(--rabbit-modal-transition);
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    background-color: rgba(15, 23, 42, 0.6);
+}
+
+.rabbit-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Dialog */
+.rabbit-modal-dialog {
+    position: fixed;
+    max-height: 90vh;
+    margin: 1rem;
+    transform: scale(0.98);
+    opacity: 0;
+    transition: var(--rabbit-modal-transition);
+    pointer-events: none;
+}
+
+.rabbit-modal.show .rabbit-modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Size variants */
+.rabbit-modal-dialog.small {
+    width: 100%;
+    max-width: var(--rabbit-modal-small);
+}
+
+.rabbit-modal-dialog.default {
+    width: 100%;
+    max-width: var(--rabbit-modal-default);
+}
+
+.rabbit-modal-dialog.large {
+    width: 100%;
+    max-width: var(--rabbit-modal-large);
+}
+
+.rabbit-modal-dialog.xlarge {
+    width: 100%;
+    max-width: var(--rabbit-modal-xlarge);
+}
+
+/* Full width and special variants */
+.rabbit-modal-dialog.fullwidth-top,
+.rabbit-modal-dialog.fullwidth-bottom,
+.rabbit-modal-dialog.cover-page {
+    margin: 0;
+    position: fixed;
+    left: 0;
+    width: 100vw;
+}
+
+.rabbit-modal-dialog.fullwidth-top {
+    top: 0;
+    max-height: 40vh;
+    border-radius: 0 0 var(--rabbit-modal-border-radius) var(--rabbit-modal-border-radius);
+}
+
+.rabbit-modal-dialog.fullwidth-top .rabbit-modal-content {
+    border-radius: 0 0 var(--rabbit-modal-border-radius) var(--rabbit-modal-border-radius);
+}
+
+.rabbit-modal-dialog.fullwidth-bottom {
+    bottom: 0;
+    max-height: 40vh;
+    border-radius: var(--rabbit-modal-border-radius) var(--rabbit-modal-border-radius) 0 0;
+}
+
+.rabbit-modal-dialog.fullwidth-bottom .rabbit-modal-content {
+    border-radius: var(--rabbit-modal-border-radius) var(--rabbit-modal-border-radius) 0 0;
+}
+
+/* Cover page */
+.rabbit-modal-dialog.cover-page {
+    top: 0;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+}
+
+.rabbit-modal-dialog.cover-page .rabbit-modal-content {
+    border-radius: 0;
+    height: 100vh;
+}
+
+.rabbit-modal-dialog.cover-page .rabbit-modal-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Sidebar variants */
+.rabbit-modal-dialog.left-sidebar,
+.rabbit-modal-dialog.right-sidebar {
+    position: fixed;
+    top: 0;
+    width: 320px;
+    height: 100vh;
+    max-height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    transition: transform var(--rabbit-modal-transition);
+}
+
+.rabbit-modal-dialog.left-sidebar {
+    left: 0;
+    transform: translateX(-100%);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.left-sidebar {
+    transform: translateX(0);
+}
+
+.rabbit-modal-dialog.right-sidebar {
+    right: 0;
+    transform: translateX(100%);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.right-sidebar {
+    transform: translateX(0);
+}
+
+.rabbit-modal-dialog.left-sidebar .rabbit-modal-content,
+.rabbit-modal-dialog.right-sidebar .rabbit-modal-content {
+    height: 100vh;
+    border-radius: 0;
+}
+
+.rabbit-modal-dialog.left-sidebar .rabbit-modal-body,
+.rabbit-modal-dialog.right-sidebar .rabbit-modal-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Position variants */
+.rabbit-modal-dialog.center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.98);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.center {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.rabbit-modal-dialog.top {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scale(0.98);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.top {
+    transform: translateX(-50%) scale(1);
+}
+
+.rabbit-modal-dialog.top-right {
+    top: 0;
+    right: 0;
+}
+
+.rabbit-modal-dialog.top-left {
+    top: 0;
+    left: 0;
+}
+
+.rabbit-modal-dialog.bottom {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scale(0.98);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.bottom {
+    transform: translateX(-50%) scale(1);
+}
+
+.rabbit-modal-dialog.bottom-right {
+    bottom: 0;
+    right: 0;
+}
+
+.rabbit-modal-dialog.bottom-left {
+    bottom: 0;
+    left: 0;
+}
+
+.rabbit-modal-dialog.right {
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%) scale(0.98);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.right {
+    transform: translateY(-50%) scale(1);
+}
+
+.rabbit-modal-dialog.left {
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%) scale(0.98);
+}
+
+.rabbit-modal.show .rabbit-modal-dialog.left {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Content */
+.rabbit-modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: var(--rabbit-modal-content-bg);
+    border-radius: var(--rabbit-modal-border-radius);
+    box-shadow: var(--rabbit-modal-box-shadow);
+    pointer-events: auto;
+    overflow: hidden;
+}
+
+.rabbit-modal-dialog.full .rabbit-modal-content {
+    border-radius: 0;
+}
+
+/* Header */
+.rabbit-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--rabbit-modal-header-padding);
+    background-color: #f8fafc;
+    border-bottom: 1px solid var(--rabbit-color-border);
+}
+
+.rabbit-modal-title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--rabbit-color-text);
+    line-height: 1.2;
+}
+
+.rabbit-modal-close {
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem -0.5rem auto;
+    background: none;
+    border: 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+
+.rabbit-modal-close:hover {
+    opacity: 1;
+}
+
+/* Body */
+.rabbit-modal-body {
+    padding: var(--rabbit-modal-body-padding);
+    overflow-y: auto;
+    color: var(--rabbit-color-text-secondary);
+    line-height: 1.5;
+    font-size: 0.875rem;
+}
+
+/* Footer */
+.rabbit-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--rabbit-modal-gap);
+    padding: var(--rabbit-modal-footer-padding);
+    background-color: #f8fafc;
+    border-top: 1px solid var(--rabbit-color-border);
+}
+
+/* Buttons */
+.rabbit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: var(--rabbit-modal-transition);
+    white-space: nowrap;
+}
+
+.rabbit-btn.primary {
+    background-color: var(--rabbit-color-primary);
+    color: white;
+}
+
+.rabbit-btn.primary:hover {
+    background-color: var(--rabbit-color-primary-hover);
+}
+
+.rabbit-btn.secondary {
+    background-color: var(--rabbit-color-secondary);
+    color: white;
+}
+
+.rabbit-btn.secondary:hover {
+    background-color: var(--rabbit-color-secondary-hover);
+}
+
+/* Input styles */
+.rabbit-modal-input {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.rabbit-modal-input:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Responsive design */
+@media (max-width: 576px) {
+    .rabbit-modal-dialog {
+        max-width: calc(100% - 2rem);
+        margin: 1rem;
+    }
+}
