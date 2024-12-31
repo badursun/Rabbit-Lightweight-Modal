@@ -1,5 +1,12 @@
 # 🎯 Rabbit Modal Todo List
 
+## 0. Özel Notlar
+- [ ] Dynamic Content demosunu butonlardan kurtar, event'lara bindir.
+- [ ] Timer & Progress Options demolarında 
+- [ ] Modal Footer ve Header için minimal, default ve large şeklinde boyutlandırma özelliği
+- [ ] 
+
+
 ## 1. JavaScript Optimizasyonları
 - [x] Event Delegation implementasyonu
   - [x] Modal butonları için tek event listener
@@ -13,6 +20,15 @@
   - [x] Event listener cleanup
   - [x] Reference cleanup
   - [x] Circular reference kontrolleri
+- [x] Button Management
+  - [x] Multiple buttons desteği
+  - [x] Dynamic button ekleme/silme
+  - [x] Button state yönetimi
+  - [x] Button grupları
+- [x] Header Controls
+  - [x] Optional close button
+  - [x] Accessibility support
+  - [x] SVG icon entegrasyonu
 - [ ] Lazy Loading
   - [ ] İçerik lazy loading
   - [ ] Image lazy loading
@@ -40,17 +56,103 @@
 - [ ] Keyboard Navigation
   - [ ] Tab order yönetimi
   - [ ] Focus trap implementasyonu
-  - [ ] Shortcut keys
+  - [ ] ARIA attributes
 - [ ] Screen Reader Support
   - [ ] ARIA labels
-  - [ ] ARIA roles
-  - [ ] ARIA states
-- [ ] Color Contrast
-  - [ ] WCAG AA uyumluluğu
-  - [ ] WCAG AAA uyumluluğu
-  - [ ] High contrast tema
+  - [ ] Role tanımları
+  - [ ] Live regions
+- [ ] High Contrast Mode
+  - [ ] Contrast ratio kontrolü
+  - [ ] Forced colors mode desteği
+  - [ ] Windows high contrast desteği
 
-## 4. API Geliştirmeleri
+## 4. Event ve Callback Sistemi
+- [ ] Modal Yaşam Döngüsü Eventleri
+  - [ ] onBeforeShow: Modal açılmadan önce
+  - [ ] onShow: Modal açıldığında
+  - [ ] onBeforeHide: Modal kapanmadan önce
+  - [ ] onHide: Modal kapandığında
+- [ ] Timer Eventleri
+  - [ ] onTimerStart: Timer başladığında
+  - [ ] onTimerEnd: Timer bittiğinde
+  - [ ] onTimerTick: Her timer tick'inde (opsiyonel)
+- [ ] Button Eventleri
+  - [ ] onButtonClick: Herhangi bir buton tıklandığında
+  - [ ] Custom button callbacks
+- [ ] Event Yönetimi
+  - [ ] Event bubbling kontrolü
+  - [ ] Event öncelikleri
+  - [ ] Event iptal edebilme
+  - [ ] Async event desteği
+- [ ] Global Event Listeners
+  - [ ] Tüm modallar için global event dinleme
+  - [ ] Event filtering ve routing
+  - [ ] Debug mode event logging
+
+## 5. Button Management İyileştirmeleri
+- [ ] Button Action System
+  - [x] Global event delegation
+  - [x] Default close action
+  - [ ] Action validation
+  - [ ] Error handling for callbacks
+  - [ ] Loading state for async actions
+
+- [ ] Button Styling
+  - [ ] Consistent button types
+  - [ ] Custom button styles
+  - [ ] State indicators (hover, active, disabled)
+  - [ ] Loading spinners for async actions
+
+## 6. Modal Stack Management
+- [ ] Stack Control
+  - [ ] Z-index management
+  - [ ] Focus management in stacked modals
+  - [ ] Keyboard navigation between stacks
+  - [ ] Stack limit configuration
+
+- [ ] Stack Events
+  - [ ] Stack change events
+  - [ ] Stack overflow handling
+  - [ ] Stack cleanup on close
+
+## 7. Documentation & Examples
+- [ ] Interactive Examples
+  - [ ] Basic usage examples
+  - [ ] Advanced configurations
+  - [ ] Button management examples
+  - [ ] Stack management examples
+
+- [ ] API Documentation
+  - [ ] Complete method documentation
+  - [ ] Event documentation
+  - [ ] Configuration options
+  - [ ] Best practices guide
+
+## 8. Test Coverage
+- [ ] Unit Tests
+  - [ ] Core functionality tests
+  - [ ] Button action tests
+  - [ ] Event handling tests
+  - [ ] Stack management tests
+
+- [ ] Integration Tests
+  - [ ] Browser compatibility tests
+  - [ ] Performance benchmarks
+  - [ ] Accessibility compliance tests
+
+## 9. Performance Monitoring
+- [ ] Performance Metrics
+  - [ ] Render time tracking
+  - [ ] Memory usage monitoring
+  - [ ] Event handling latency
+  - [ ] Animation frame rate
+
+- [ ] Optimization Tools
+  - [ ] Bundle size analyzer
+  - [ ] Performance profiler
+  - [ ] Memory leak detector
+
+## 10. API Geliştirmeleri
 - [ ] Promise Support
   - [ ] show() Promise desteği
   - [ ] hide() Promise desteği
@@ -65,7 +167,7 @@
   - [ ] Template validation
   - [ ] Template caching
 
-## 5. Performans İyileştirmeleri
+## 11. Performans İyileştirmeleri
 - [ ] Code Splitting
   - [ ] Core/Plugin ayrımı
   - [ ] Dynamic imports
@@ -83,7 +185,7 @@
   - [ ] CSS transitions
   - [ ] Hardware acceleration
 
-## 6. Yeni Özellikler
+## 12. Yeni Özellikler
 - [ ] Drag & Drop
   - [ ] Sürüklenebilir header
   - [ ] Bounds kontrolü
@@ -101,7 +203,26 @@
   - [ ] Fade transitions
   - [ ] Custom transitions
 
-## 7. Test ve Dokümantasyon
+## 13. Buton Sistemi İyileştirmeleri
+- [ ] Esnek Buton Yapısı
+  - [ ] Çoklu aynı tip buton desteği
+  - [ ] Benzersiz buton ID sistemi
+  - [ ] Dinamik buton ekleme/çıkarma API'si
+- [ ] Callback Sistemi
+  - [ ] Promise tabanlı callback desteği
+  - [ ] Async/await uyumluluğu
+  - [ ] Event bazlı callback sistemi
+- [ ] Buton Özelleştirmeleri
+  - [ ] Custom CSS class desteği
+  - [ ] Icon desteği
+  - [ ] Disabled state yönetimi
+  - [ ] Loading state desteği
+- [ ] Buton Grupları
+  - [ ] Butonları gruplama özelliği
+  - [ ] Grup bazlı stil tanımları
+  - [ ] Grup bazlı davranış kontrolü
+
+## 14. Test ve Dokümantasyon
 - [ ] Unit Tests
   - [ ] Core fonksiyonlar
   - [ ] Event handling
@@ -119,7 +240,7 @@
   - [ ] Usage examples
   - [ ] TypeScript definitions
 
-## 8. Browser Compatibility
+## 15. Browser Compatibility
 - [ ] Polyfills
   - [ ] Core features
   - [ ] ES6+ features
@@ -144,3 +265,4 @@
 6. Test ve Dokümantasyon
 7. Browser Compatibility
 8. Yeni Özellikler
+9. Buton Sistemi İyileştirmeleri

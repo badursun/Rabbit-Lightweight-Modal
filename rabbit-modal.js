@@ -1,279 +1,489 @@
-/**
- * Rabbit Lightweight Modal
- * Ultra-lightweight, dependency-free modal dialog library
- * @author Rabbit Modal Team
- * @license MIT
- */
-
-(() => {
-  class RabbitOverlay {
-    static #instance = null;
-    #element;
-    #activeCount = 0;
-
-    constructor() {
-      this.#element = document.createElement("div");
-      this.#element.className = "rabbit-overlay";
-      document.body.appendChild(this.#element);
-    }
-
-    static getInstance() {
-      if (!RabbitOverlay.#instance) {
-        RabbitOverlay.#instance = new RabbitOverlay();
-      }
-      return RabbitOverlay.#instance;
-    }
-
-    setColor(color) {
-      this.#element.style.backgroundColor = color;
-    }
-
-    incrementCounter() {
-      this.#activeCount++;
-      if (this.#activeCount === 1) {
-        this.#element.classList.add("show");
-      }
-    }
-
-    decrementCounter() {
-      this.#activeCount--;
-      if (this.#activeCount === 0) {
-        this.#element.classList.remove("show");
-      }
-    }
-  }
+(function (global) {
+  "use strict";
 
   class RabbitModal {
     static #instances = new Set();
-    static #zIndexBase = 9000;
     static #defaultOptions = {
       title: "",
       content: "",
-      buttons: {},
-      stackable: false,
-      closeOnBackdrop: true,
-      closeOnEscape: true,
-      overlay: true,
-      overlayColor: "rgba(0, 0, 0, 0.5)",
       size: "default",
-      position: "center"
+      position: "center",
+      buttons: [],
+      overlay: true,
+      overlayColor: "rgba(15, 23, 42, 0.6)",
+      overlayBlur: false,
+      closeOnEscape: true,
+      closeOnBackdrop: true,
+      showHeaderClose: true,
+      stackable: false,
+      type: null,         // success, error, warning, info
+      timer: {
+        enabled: false,   // timer'ı aktif etmek için bayrak
+        duration: 3000,   // default 3000ms
+        progress: false,  // default false
+        closeOnTimeup: true, // default true
+        onTimeup: null    // async callback function when timer ends
+      }
     };
 
-    static #templateCache = new Map();
-
-    #options;
-    #element;
-    #isVisible = false;
+    #element = null;
+    #options = {};
+    #buttonCallbacks = new Map();
+    #timeoutId = null;
+    #progressBar = null;
+    #startTime = null;
+    #duration = 0;
     #eventListeners = {};
-    #zIndex = 0;
-    #documentFragment;
+    #isVisible = false;
 
     constructor(options = {}) {
       this.#options = { ...RabbitModal.#defaultOptions, ...options };
-      this.#createModal();
-      this.#setupEventHandlers();
       RabbitModal.#instances.add(this);
+      this.#createModal();
     }
 
-    static #getVisibleModals() {
-      return Array.from(RabbitModal.#instances).filter(modal => modal.isVisible);
-    }
+    #createModal() {
+      const modal = document.createElement('div');
+      modal.className = 'rabbit-modal';
+      if (this.#options.class) {
+        modal.classList.add(this.#options.class);
+      }
+      if (this.#options.type) {
+        modal.classList.add(`rabbit-modal-${this.#options.type}`);
+      }
 
-    static #updateModalStack() {
-      const visibleModals = RabbitModal.#getVisibleModals();
-      visibleModals.forEach((modal, index) => {
-        modal.#zIndex = RabbitModal.#zIndexBase + ((index + 1) * 10);
-        modal.#element.style.zIndex = modal.#zIndex;
-      });
-    }
+      const overlay = document.createElement('div');
+      overlay.className = 'rabbit-overlay';
+      if (this.#options.overlay) {
+        if (this.#options.overlayColor) {
+          overlay.style.backgroundColor = this.#options.overlayColor;
+        }
+        if (this.#options.overlayBlur) {
+          overlay.classList.add('rabbit-overlay-blur');
+        }
+      } else {
+        overlay.style.display = 'none';
+      }
+      modal.appendChild(overlay);
 
-    get options() {
-      return this.#options;
-    }
+      const dialog = document.createElement('div');
+      dialog.className = 'rabbit-modal-dialog';
 
-    get element() {
-      return this.#element;
-    }
+      // Add progress bar if timer progress is enabled
+      if (this.#options.timer?.enabled && this.#options.timer?.progress) {
+        const progressBar = document.createElement('div');
+        progressBar.className = 'rabbit-modal-progress';
+        progressBar.style.width = '100%';
+        dialog.appendChild(progressBar);
+        this.#progressBar = progressBar;
+      }
 
-    get isVisible() {
-      return this.#isVisible;
-    }
+      modal.appendChild(dialog);
 
-    #setupEventHandlers() {
-      const handleModalEvents = (e) => {
-        if (e.type === 'keydown' && e.key === 'Escape' && this.#options.closeOnEscape) {
-          this.hide();
-          return;
+      // Create header only if it's not an alert type and has title or showHeaderClose
+      if (!this.#options.type && (this.#options.title || this.#options.showHeaderClose)) {
+        const header = document.createElement('div');
+        header.className = 'rabbit-modal-header';
+
+        if (this.#options.title) {
+          const title = document.createElement('h3');
+          title.className = 'rabbit-modal-title';
+          title.textContent = this.#options.title;
+          header.appendChild(title);
         }
 
-        if (e.type === 'click') {
-          if (e.target === this.#element && this.#options.closeOnBackdrop) {
+        if (this.#options.showHeaderClose) {
+          const closeButton = document.createElement('button');
+          closeButton.className = 'rabbit-modal-close';
+          closeButton.setAttribute('data-action', 'close');
+          closeButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          `;
+          header.appendChild(closeButton);
+        }
+
+        dialog.appendChild(header);
+      }
+
+      // Create body
+      const body = document.createElement('div');
+      body.className = 'rabbit-modal-body';
+
+      // Add alert icon if it's an alert type
+      if (this.#options.type) {
+        const alertIcon = document.createElement('div');
+        alertIcon.className = 'rabbit-alert-icon';
+        
+        // Alert type icons
+        const icons = {
+          success: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>`,
+          error: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>`,
+          warning: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>`,
+          info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>`
+        };
+        
+        alertIcon.innerHTML = icons[this.#options.type] || '';
+        body.appendChild(alertIcon);
+
+        // Add title in body for alert types
+        if (this.#options.title) {
+          const alertTitle = document.createElement('h3');
+          alertTitle.className = 'rabbit-alert-title';
+          alertTitle.textContent = this.#options.title;
+          body.appendChild(alertTitle);
+        }
+      }
+
+      if (typeof this.#options.content === 'string') {
+        const content = document.createElement('div');
+        content.className = 'rabbit-modal-content';
+        content.innerHTML = this.#options.content;
+        body.appendChild(content);
+      } else if (this.#options.content instanceof HTMLElement) {
+        const content = document.createElement('div');
+        content.className = 'rabbit-modal-content';
+        content.appendChild(this.#options.content);
+        body.appendChild(content);
+      }
+      
+      dialog.appendChild(body);
+
+      // Create footer if buttons exist
+      if (this.#options.buttons && this.#options.buttons.length > 0) {
+        const footer = document.createElement('div');
+        footer.className = 'rabbit-modal-footer';
+        dialog.appendChild(footer);
+
+        // Create buttons after footer is appended
+        this.#options.buttons.forEach(button => {
+          const btn = document.createElement('button');
+          btn.className = `rabbit-btn ${button.type ? `rabbit-btn-${button.type}` : ''} ${button.class || ''}`;
+          btn.textContent = button.text;
+          
+          // Set data attribute for action
+          if (button.key) {
+            btn.setAttribute('data-rabbit-action', button.key);
+          }
+
+          footer.appendChild(btn);
+        });
+
+        // Add global button event listener to footer
+        footer.addEventListener('click', (e) => {
+          const button = e.target.closest('button');
+          if (!button) return;
+
+          const action = button.getAttribute('data-rabbit-action');
+          if (!action) {
+            // Varsayılan olarak modalı kapat
             this.hide();
             return;
           }
 
-          const button = e.target.closest('.rabbit-modal-footer button');
-          if (button) {
-            const buttonKey = button.dataset.key;
-            this.#emit("button", { button: buttonKey });
-            if (this.#options?.stackable !== true) {
+          // Buton konfigürasyonunu bul
+          const buttonConfig = this.#options.buttons.find(btn => btn.key === action);
+          if (!buttonConfig) {
+            // Konfigürasyon bulunamadıysa ve action "close" ise kapat
+            if (action === 'close') {
               this.hide();
             }
+            return;
           }
+
+          // Callback varsa çalıştır
+          if (typeof buttonConfig.callback === 'function') {
+            buttonConfig.callback(this);
+          } else if (action === 'close') {
+            // Callback yoksa ve action "close" ise kapat
+            this.hide();
+          }
+        });
+      }
+
+      document.body.appendChild(modal);
+      this.#element = modal;
+
+      this.#setupEventHandlers();
+      this.#updatePosition();
+      this.#updateSize();
+
+      return modal;
+    }
+
+    #setupEventHandlers() {
+      // Overlay click handler
+      const overlay = this.#element.querySelector('.rabbit-overlay');
+      if (this.#options.closeOnBackdrop && overlay) {
+        const overlayHandler = (e) => {
+          if (e.target === overlay) {
+            this.hide();
+          }
+        };
+        overlay.addEventListener('click', overlayHandler);
+        this.#eventListeners['overlay'] = overlayHandler;
+      }
+
+      // Close button handlers for both header and footer
+      const closeButtons = this.#element.querySelectorAll('[data-action="close"]');
+      closeButtons.forEach(button => {
+        const closeHandler = () => this.hide();
+        button.addEventListener('click', closeHandler);
+        if (!this.#eventListeners['closeButtons']) {
+          this.#eventListeners['closeButtons'] = [];
         }
+        this.#eventListeners['closeButtons'].push({ element: button, handler: closeHandler });
+      });
+
+      // ESC key handler
+      if (this.#options.closeOnEscape) {
+        const escHandler = (e) => {
+          if (e.key === 'Escape' && this.#isVisible) {
+            this.hide();
+          }
+        };
+        document.addEventListener('keydown', escHandler);
+        this.#eventListeners['escKey'] = escHandler;
+      }
+    }
+
+    #updatePosition() {
+      const dialog = this.#element.querySelector('.rabbit-modal-dialog');
+      if (!dialog) return;
+
+      // Reset all position classes
+      dialog.classList.remove(
+        'center',
+        'left', 'left-sidebar',
+        'right', 'right-sidebar',
+        'top', 'top-left', 'top-right',
+        'bottom', 'bottom-left', 'bottom-right',
+        'fullwidth-top', 'fullwidth-bottom'
+      );
+
+      // Skip positioning for cover-page size
+      if (this.#options.size === 'cover-page') return;
+
+      // Map position names
+      const positionMap = {
+        'center': 'center',
+        'left': 'left',
+        'left-sidebar': 'left-sidebar',
+        'right': 'right',
+        'right-sidebar': 'right-sidebar',
+        'top': 'top',
+        'top-left': 'top-left',
+        'top-right': 'top-right',
+        'bottom': 'bottom',
+        'bottom-left': 'bottom-left',
+        'bottom-right': 'bottom-right',
+        'fullwidth-top': 'fullwidth-top',
+        'fullwidth-bottom': 'fullwidth-bottom'
       };
 
-      document.addEventListener("keydown", handleModalEvents);
-      this.#element.addEventListener("click", handleModalEvents);
-
-      this._handleModalEvents = handleModalEvents;
+      // Add the mapped position class
+      const positionClass = positionMap[this.#options.position];
+      if (positionClass) {
+        dialog.classList.add(positionClass);
+      }
     }
 
-    #createModal() {
-      this.#documentFragment = document.createDocumentFragment();
-      
-      this.#element = document.createElement("div");
-      this.#element.className = "rabbit-modal";
+    #updateSize() {
+      const dialog = this.#element.querySelector('.rabbit-modal-dialog');
+      if (!dialog) return;
 
-      const cacheKey = `${this.#options.size}-${this.#options.position}`;
-      let dialog;
+      // Reset all size classes
+      dialog.classList.remove('small', 'default', 'large', 'xlarge', 'cover-page');
 
-      if (RabbitModal.#templateCache.has(cacheKey)) {
-        dialog = RabbitModal.#templateCache.get(cacheKey).cloneNode(true);
+      // Add the size class
+      const validSizes = ['small', 'default', 'large', 'xlarge', 'cover-page'];
+      const size = validSizes.includes(this.#options.size) ? this.#options.size : 'default';
+      dialog.classList.add(size);
+
+      // Special handling for cover-page
+      if (size === 'cover-page') {
+        dialog.style.maxWidth = '100%';
+        dialog.style.maxHeight = '100vh';
       } else {
-        dialog = this.#createDialogTemplate();
-        RabbitModal.#templateCache.set(cacheKey, dialog.cloneNode(true));
+        dialog.style.maxWidth = '';
+        dialog.style.maxHeight = '';
       }
-
-      const content = dialog.querySelector('.rabbit-modal-content');
-      
-      if (this.#options.title) {
-        const header = document.createElement("div");
-        header.className = "rabbit-modal-header";
-        header.innerHTML = `<h5 class="rabbit-modal-title">${this.#options.title}</h5>`;
-        content.appendChild(header);
-      }
-
-      const body = document.createElement("div");
-      body.className = "rabbit-modal-body";
-      body.innerHTML = this.#options.content;
-      content.appendChild(body);
-
-      if (Object.keys(this.#options.buttons).length > 0) {
-        const footer = document.createElement("div");
-        footer.className = "rabbit-modal-footer";
-        
-        Object.entries(this.#options.buttons).forEach(([key, button]) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `btn btn-${button.type || "secondary"}`;
-          btn.textContent = button.text;
-          btn.dataset.key = key; 
-          footer.appendChild(btn);
-        });
-        
-        content.appendChild(footer);
-      }
-
-      this.#element.appendChild(dialog);
-      this.#documentFragment.appendChild(this.#element);
-      document.body.appendChild(this.#documentFragment);
     }
 
-    #createDialogTemplate() {
-      const dialog = document.createElement("div");
-      dialog.className = `rabbit-modal-dialog ${this.#options.size}`;
+    #emit(eventName) {
+      const event = new CustomEvent(`rabbit-modal-${eventName}`, {
+        detail: { modal: this }
+      });
+      this.#element.dispatchEvent(event);
+      document.dispatchEvent(event);
+    }
 
-      if (this.#options.position === 'left-sidebar' || this.#options.position === 'right-sidebar') {
-        dialog.classList.add(this.#options.position);
-      } else if (!['cover-page'].includes(this.#options.size)) {
-        dialog.classList.add(this.#options.position);
+    #getAlertIcon(type) {
+      const icons = {
+        success: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>`,
+        error: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>`,
+        warning: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>`,
+        info: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>`
+      };
+      return icons[type] || '';
+    }
+
+    #updateProgress() {
+      if (!this.#progressBar || !this.#startTime) return;
+
+      const elapsed = Date.now() - this.#startTime;
+      const remaining = Math.max(0, this.#duration - elapsed);
+      const progress = (remaining / this.#duration) * 100;
+
+      this.#progressBar.style.width = `${progress}%`;
+
+      if (progress > 0) {
+        requestAnimationFrame(() => this.#updateProgress());
       }
-
-      const content = document.createElement("div");
-      content.className = "rabbit-modal-content";
-      dialog.appendChild(content);
-
-      return dialog;
     }
 
     show() {
-      if (this.#isVisible) return;
-
-      if (this.#options.overlay) {
-        const overlay = RabbitOverlay.getInstance();
-        overlay.setColor(this.#options.overlayColor);
-        overlay.incrementCounter();
-      }
-
+      // Force reflow
+      this.#element.offsetHeight;
       this.#element.classList.add("show");
-      this.#element.setAttribute("aria-hidden", "false");
       this.#isVisible = true;
 
-      RabbitModal.#updateModalStack();
+      if (this.#options.overlayBlur) {
+        document.body.classList.add('rabbit-modal-blur');
+      }
+
+      // Start timer if enabled and duration is set
+      if (this.#options.timer?.enabled && this.#options.timer?.duration > 0) {
+        this.#startTime = Date.now();
+        this.#duration = this.#options.timer.duration;
+        
+        // Timer başladı eventi
+        this.#emit('timer-start');
+        
+        if (this.#options.timer.progress && this.#progressBar) {
+          this.#updateProgress();
+        }
+        
+        this.#timeoutId = setTimeout(async () => {
+          // Timer bitti eventi
+          this.#emit('timer-end');
+          
+          // Callback varsa çalıştır
+          if (this.#options.timer.onTimeup) {
+            await this.#options.timer.onTimeup(this);
+          }
+          
+          // Otomatik kapanma ayarı
+          if (this.#options.timer.closeOnTimeup) {
+            this.hide();
+          }
+        }, this.#options.timer.duration);
+      }
 
       this.#emit("show");
+      return this;
     }
 
     hide() {
-      if (!this.#isVisible) return;
-
-      const focusedElement = document.activeElement;
-      if (focusedElement && this.#element.contains(focusedElement)) {
-        focusedElement.blur();
+      if (this.#timeoutId) {
+        clearTimeout(this.#timeoutId);
+        this.#timeoutId = null;
       }
 
-      this.#element.classList.remove("show");
-      this.#element.setAttribute("aria-hidden", "true");
       this.#isVisible = false;
+      this.#element.classList.remove("show");
       
-      if (this.#options.overlay) {
-        RabbitOverlay.getInstance().decrementCounter();
+      if (this.#options.overlayBlur) {
+        document.body.classList.remove('rabbit-modal-blur');
       }
 
-      RabbitModal.#updateModalStack();
+      setTimeout(() => {
+        if (this.#element && this.#element.parentNode) {
+          this.#element.parentNode.removeChild(this.#element);
+        }
+        this.#emit("hide");
+      }, 200);
 
-      this.#emit("hide");
-
-      this.destroy();
+      return this;
     }
 
     destroy() {
       RabbitModal.#instances.delete(this);
 
-      if (this._handleModalEvents) {
-        document.removeEventListener("keydown", this._handleModalEvents);
-        this.#element?.removeEventListener("click", this._handleModalEvents);
-        this._handleModalEvents = null;
+      // Remove all event listeners
+      if (this.#eventListeners) {
+        // Remove overlay handler
+        if (this.#eventListeners['overlay']) {
+          const overlay = this.#element?.querySelector('.rabbit-overlay');
+          if (overlay) {
+            overlay.removeEventListener('click', this.#eventListeners['overlay']);
+          }
+        }
+
+        // Remove close button handlers
+        if (this.#eventListeners['closeButtons']) {
+          this.#eventListeners['closeButtons'].forEach(({ element, handler }) => {
+            element.removeEventListener('click', handler);
+          });
+        }
+
+        // Remove ESC handler
+        if (this.#eventListeners['escKey']) {
+          document.removeEventListener('keydown', this.#eventListeners['escKey']);
+        }
       }
 
-      if (this.#element?.parentNode) {
+      // Remove blur effect if active
+      if (this.#options.overlayBlur) {
+        document.body.classList.remove('rabbit-modal-blur');
+      }
+
+      // Remove element if exists
+      if (this.#element && this.#element.parentNode) {
         this.#element.parentNode.removeChild(this.#element);
       }
 
-      this.#eventListeners = {};
+      // Clear all references
       this.#element = null;
-      this.#options = null;
-      this.#documentFragment = null;
+      this.#options = {};
+      this.#buttonCallbacks.clear();
+      this.#eventListeners = {};
+      this.#isVisible = false;
     }
 
-    on(event, callback) {
-      if (!this.#eventListeners[event]) {
-        this.#eventListeners[event] = [];
-      }
-      this.#eventListeners[event].push(callback);
+    addEventListener(event, callback) {
+      this.#element.addEventListener(`rabbit-modal-${event}`, callback);
     }
 
-    #emit(event, data) {
-      if (this.#eventListeners[event]) {
-        this.#eventListeners[event].forEach(callback => callback(data));
-      }
+    removeEventListener(event, callback) {
+      this.#element.removeEventListener(`rabbit-modal-${event}`, callback);
+    }
+
+    static #getVisibleModals() {
+      return Array.from(RabbitModal.#instances).filter(modal => modal.#isVisible);
     }
   }
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = RabbitModal;
   } else {
-    window.RabbitModal = RabbitModal;
+    global.RabbitModal = RabbitModal;
   }
-})();
+})(typeof window !== "undefined" ? window : this);

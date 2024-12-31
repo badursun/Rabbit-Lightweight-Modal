@@ -14,6 +14,10 @@ A lightweight, customizable modal library for modern web applications. No depend
 - 📚 Stackable modals
 - 🚀 Smooth animations
 - 📱 Responsive design
+- 🔘 Multiple buttons support with groups and alignment
+- ⚡ Async operation support with loading states
+- 🎛️ Dynamic button management
+- ❌ Optional header close button
 
 ## Installation
 
@@ -32,9 +36,13 @@ const modal = new RabbitModal({
   content: "This is a basic modal example",
   size: "default",
   position: "center",
-  buttons: {
-    close: { text: "Close", type: "secondary" },
-  },
+  buttons: [
+    {
+      key: "close",
+      text: "Close",
+      type: "secondary"
+    }
+  ]
 });
 
 modal.show();
@@ -45,82 +53,118 @@ modal.show();
 - `small`: Compact size for simple messages
 - `default`: Standard size for most use cases
 - `large`: Larger size for more content
-- `xlarge`: Extra large size for rich content
-- `cover-page`: Full viewport coverage
-
-```javascript
-const modal = new RabbitModal({
-  size: "large", // small, default, large, xlarge, cover-page
-  // ... other options
-});
-```
+- `xlarge`: Extra large size for complex content
+- `cover-page`: Full page coverage
 
 ## Position Options
 
 - `center`: Center of the screen (default)
-- `top`, `right`, `bottom`, `left`: Edge positions
-- `top-left`, `top-right`, `bottom-left`, `bottom-right`: Corner positions
-- `left-sidebar`, `right-sidebar`: Sliding sidebar panels
+- `top`: Top of the screen
+- `right`: Right side
+- `bottom`: Bottom of the screen
+- `left`: Left side
+- `top-left`: Top left corner
+- `top-right`: Top right corner
+- `bottom-left`: Bottom left corner
+- `bottom-right`: Bottom right corner
+
+## Button Configuration
+
+Buttons can be configured in two ways:
+
+1. Simple Close Button:
+```javascript
+buttons: [
+    {
+        key: "close",
+        text: "Close",
+        type: "secondary"
+    }
+]
+```
+
+2. Custom Action Button:
+```javascript
+buttons: [
+    {
+        key: "save",
+        text: "Save",
+        type: "primary",
+        callback: (modal) => {
+            // Custom action
+        }
+    }
+]
+```
+
+Button Properties:
+- `key`: Unique identifier for the button (required)
+- `text`: Button text to display (required)
+- `type`: Button style type (primary, secondary, etc.)
+- `callback`: Custom function to execute (optional)
+
+## Event Handling
+
+The modal supports various events and actions:
+
+1. Button Actions:
+   - Default close action with `key: "close"`
+   - Custom actions with `callback` function
+   - Automatic modal closing for undefined actions
+
+2. Global Events:
+   - Click outside modal to close
+   - ESC key to close
+   - Stacked modal management
+
+## Sidebar Options
+
+For creating sliding panels:
 
 ```javascript
-const modal = new RabbitModal({
-  position: "top-right", // Any position from above
-  // ... other options
+const sidebar = new RabbitModal({
+  position: "right-sidebar", // or "left-sidebar"
+  title: "Sidebar Panel",
+  content: "Your sidebar content here"
 });
 ```
 
 ## Overlay Options
 
+Customize the modal backdrop:
+
 ```javascript
 const modal = new RabbitModal({
-  overlay: true, // false to disable overlay
-  overlayColor: "rgba(0, 0, 0, 0.5)", // Custom overlay color
-  // ... other options
+    overlayColor: "rgba(0, 0, 0, 0.5)", // Custom overlay color rgb and rgba
+    closeOnClick: true,
+    overlayBlur: true
 });
 ```
 
 ## Stacked Modals
 
+Open multiple modals on top of each other:
+
 ```javascript
 const modal1 = new RabbitModal({
-  stackable: true,
-  buttons: {
-    next: {
-      text: "Open Next",
-      onClick: () => {
+  title: "First Modal",
+  content: "Content of first modal",
+  buttons: [
+    {
+      key: "openSecond",
+      text: "Open Second Modal",
+      type: "primary",
+      callback: () => {
         const modal2 = new RabbitModal({
-          title: "Stacked Modal",
-          content: "This modal is stacked on top",
+          title: "Second Modal",
+          content: "Content of second modal"
         });
         modal2.show();
-      },
-    },
-  },
+      }
+    }
+  ]
 });
 ```
-
-## API Reference
-
-### Options
-
-| Option          | Type    | Default              | Description                      |
-| --------------- | ------- | -------------------- | -------------------------------- |
-| title           | string  | ""                   | Modal title                      |
-| content         | string  | ""                   | Modal content (can include HTML) |
-| size            | string  | "default"            | Modal size variant               |
-| position        | string  | "center"             | Modal position                   |
-| overlay         | boolean | true                 | Show/hide overlay                |
-| overlayColor    | string  | "rgba(0, 0, 0, 0.5)" | Overlay color                    |
-| stackable       | boolean | false                | Allow stacking modals            |
-| closeOnBackdrop | boolean | true                 | Close on overlay click           |
-| closeOnEscape   | boolean | true                 | Close on ESC key                 |
-| buttons         | object  | {}                   | Modal buttons configuration      |
-
-### Methods
-
-- `show()`: Display the modal
-- `hide()`: Hide the modal
-- `destroy()`: Remove the modal from DOM
 
 ## Browser Support
 
@@ -131,23 +175,43 @@ const modal1 = new RabbitModal({
 
 ## Change History
 
-### v1.1.0 (2024-12-30)
+### v1.1.0 (2024-12-31)
 
-#### Performance Improvements
-- **Event Delegation**
+#### 🚀 Features
+- **Button System**
+  - Added support for multiple buttons of the same type
+  - Added callback support for button actions
+  - Added loading and disabled states for buttons
+  - Added button groups and alignment options
+  - Added dynamic button management capabilities
+
+- **Timer System**
+  - Added progress bar support for timers
+  - Added timer event system (timer-start, timer-end)
+  - Added onTimeup callback for timer completion
+  - Added customizable timer duration and auto-close options
+
+#### 🔧 Improvements
+- **Event Handling**
   - Implemented single event handler for all modal interactions
   - Optimized button click handling with event delegation
   - Improved overlay and keyboard event handling
-- **DOM Optimization**
+
+- **DOM Performance**
   - Added DocumentFragment support for better DOM manipulation
   - Implemented template caching system
   - Optimized DOM element creation and management
+
 - **Memory Management**
   - Enhanced event listener cleanup
   - Improved reference management
   - Added circular reference prevention
   - Better resource cleanup on modal destroy
 
+#### 🐛 Bug Fixes
+- Fixed stacked modals issue where modals were not properly closed
+- Fixed button events not working correctly in stacked modals
+
 ## License
 
-MIT License - feel free to use in your projects 🚀
+MIT License - feel free to use in your projects.
