@@ -7,6 +7,9 @@
         duration: 3000,
         progress: true,
         closeOnTimeup: true,
+        onTick: (remainingSeconds, modal) => {
+
+        },
         onTimeup: async (modal) => {
             // Do something when timer ends
             console.log('onTimeup')

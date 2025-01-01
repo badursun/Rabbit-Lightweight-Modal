@@ -22,24 +22,60 @@
         duration: 3000,   // default 3000ms
         progress: false,  // default false
         closeOnTimeup: true, // default true
-        onTimeup: null    // async callback function when timer ends
-      }
+        onTimeup: null,    // async callback function when timer ends
+        onTick: null,     // her saniye çağrılacak callback (kalan süre parametresi ile)
+        tickInterval: 1000 // tick aralığı (ms)
+      },
+      ajax: {
+        url: null,               // AJAX isteği yapılacak URL (null ise ajax devre dışı)
+        method: 'GET',           // HTTP metodu (GET, POST, PUT, DELETE)
+        headers: {},             // İsteğe özel headers
+        data: null,              // POST/PUT için data
+        contentType: 'json',     // Response içeriğinin tipi (json, html, text)
+        loadingText: 'Loading...', // Yükleme sırasında gösterilecek metin
+        delay: 0,                // İsteği geciktirme süresi (ms)
+        timeout: 30000,          // İstek timeout süresi (ms)
+        retry: {
+          enabled: false,      // Retry özelliği
+          limit: 3,            // Maximum deneme sayısı
+          delay: 1000         // Denemeler arası bekleme süresi (ms)
+        },
+        credentials: 'same-origin', // CORS ayarları
+        onStart: null,           // İstek başlamadan önce
+        onSuccess: null,         // Başarılı yanıt
+        onError: null,           // Hata durumu
+        onComplete: null         // İşlem tamamlandığında
+      },
+      debug: false  // Debug modu
     };
 
     #element = null;
     #options = {};
     #buttonCallbacks = new Map();
     #timeoutId = null;
+    #tickerId = null;
     #progressBar = null;
     #startTime = null;
     #duration = 0;
     #eventListeners = {};
     #isVisible = false;
+    #abortController = null;     // Fetch abort controller
+    #retryCount = 0;            // Retry sayacı
+    #ajaxTimeout = null;        // Timeout timer
+    #isLoading = false;
+    #isProgress = false;
 
     constructor(options = {}) {
       this.#options = { ...RabbitModal.#defaultOptions, ...options };
       RabbitModal.#instances.add(this);
+      this.#debug('info', 'Modal instance created', { options: this.#options });
+      
       this.#createModal();
+      
+      // AJAX isteği varsa başlat
+      if (this.#options.ajax?.url) {
+        this.#startAjaxRequest();
+      }
     }
 
     #createModal() {
@@ -69,14 +105,19 @@
       const dialog = document.createElement('div');
       dialog.className = 'rabbit-modal-dialog';
 
-      // Add progress bar if timer progress is enabled
-      if (this.#options.timer?.enabled && this.#options.timer?.progress) {
-        const progressBar = document.createElement('div');
-        progressBar.className = 'rabbit-modal-progress';
-        progressBar.style.width = '100%';
-        dialog.appendChild(progressBar);
-        this.#progressBar = progressBar;
-      }
+      // Progress bar'ı her zaman oluştur
+      const progressBar = document.createElement('div');
+      progressBar.className = 'rabbit-modal-progress';
+      progressBar.style.width = '0';
+      progressBar.style.display = 'none';
+      
+      // Loading animation için ek div
+      const progressAnimation = document.createElement('div');
+      progressAnimation.className = 'rabbit-modal-progress-animation';
+      progressBar.appendChild(progressAnimation);
+      
+      dialog.appendChild(progressBar);
+      this.#progressBar = progressBar;
 
       modal.appendChild(dialog);
 
@@ -217,6 +258,11 @@
       this.#updatePosition();
       this.#updateSize();
 
+      // AJAX isteği başlat
+    //   if (this.#options.ajax?.url) {
+    //     this.#startAjaxRequest();
+    //   }
+
       return modal;
     }
 
@@ -319,11 +365,12 @@
       }
     }
 
-    #emit(eventName) {
+    #emit(eventName, data = null) {
       const event = new CustomEvent(`rabbit-modal-${eventName}`, {
-        detail: { modal: this }
+        detail: { modal: this, data }
       });
       this.#element.dispatchEvent(event);
+      this.#debug('event', `Event emitted: ${eventName}`, data);
       document.dispatchEvent(event);
     }
 
@@ -346,16 +393,34 @@
     }
 
     #updateProgress() {
-      if (!this.#progressBar || !this.#startTime) return;
+      if (!this.#progressBar) return;
 
-      const elapsed = Date.now() - this.#startTime;
-      const remaining = Math.max(0, this.#duration - elapsed);
-      const progress = (remaining / this.#duration) * 100;
+      // AJAX loading durumu timer'ı override eder
+      if (this.#isLoading) {
+        this.#progressBar.style.display = 'block';
+        this.#progressBar.classList.add('loading');
+        this.#progressBar.style.width = '100%';
+        return;
+      }
 
-      this.#progressBar.style.width = `${progress}%`;
+      // Timer progress
+      if (this.#isProgress && this.#startTime) {
+        this.#progressBar.style.display = 'block';
+        const elapsed = Date.now() - this.#startTime;
+        const remaining = Math.max(0, this.#duration - elapsed);
+        const progress = (remaining / this.#duration) * 100;
 
-      if (progress > 0) {
-        requestAnimationFrame(() => this.#updateProgress());
+        this.#progressBar.classList.remove('loading');
+        this.#progressBar.style.width = `${progress}%`;
+
+        if (progress > 0) {
+          requestAnimationFrame(() => this.#updateProgress());
+        } else {
+          this.#progressBar.style.display = 'none';
+        }
+      } else {
+        this.#progressBar.style.display = 'none';
+        this.#progressBar.style.width = '0';
       }
     }
 
@@ -369,43 +434,83 @@
         document.body.classList.add('rabbit-modal-blur');
       }
 
-      // Start timer if enabled and duration is set
+      // Timer'ı başlat
       if (this.#options.timer?.enabled && this.#options.timer?.duration > 0) {
-        this.#startTime = Date.now();
-        this.#duration = this.#options.timer.duration;
-        
-        // Timer başladı eventi
-        this.#emit('timer-start');
-        
-        if (this.#options.timer.progress && this.#progressBar) {
-          this.#updateProgress();
-        }
-        
-        this.#timeoutId = setTimeout(async () => {
-          // Timer bitti eventi
-          this.#emit('timer-end');
-          
-          // Callback varsa çalıştır
-          if (this.#options.timer.onTimeup) {
-            await this.#options.timer.onTimeup(this);
-          }
-          
-          // Otomatik kapanma ayarı
-          if (this.#options.timer.closeOnTimeup) {
-            this.hide();
-          }
-        }, this.#options.timer.duration);
+        this.startTimer();
       }
 
       this.#emit("show");
       return this;
     }
 
-    hide() {
-      if (this.#timeoutId) {
-        clearTimeout(this.#timeoutId);
-        this.#timeoutId = null;
+    startTimer() {
+      if (!this.#options.timer?.enabled) return;
+
+      // Eğer timer zaten çalışıyorsa yeni timer başlatma
+      if (this.#timeoutId) return;
+
+      this.#startTime = Date.now();
+      this.#duration = this.#options.timer.duration;
+      
+      if (this.#options.timer.progress) {
+        this.#isProgress = true;
+        this.#updateProgress();
       }
+      
+      // Timer başladı eventi
+      this.#emit('timer-start');
+
+      // Tick callback'i varsa ticker'ı başlat
+      if (this.#options.timer.onTick) {
+        const tickInterval = this.#options.timer.tickInterval || 1000;
+        this.#tickerId = setInterval(() => {
+          const elapsed = Date.now() - this.#startTime;
+          const remaining = Math.max(0, this.#duration - elapsed);
+          const remainingSeconds = Math.ceil(remaining / 1000);
+          
+          // Callback'i çağır
+          this.#options.timer.onTick(remainingSeconds, this);
+          
+          // Süre bittiyse ticker'ı durdur
+          if (remaining <= 0) {
+            clearInterval(this.#tickerId);
+          }
+        }, tickInterval);
+      }
+      
+      this.#timeoutId = setTimeout(async () => {
+        // Ticker'ı temizle
+        if (this.#tickerId) {
+          clearInterval(this.#tickerId);
+          this.#tickerId = null;
+        }
+
+        // Timer bitti eventi
+        this.#emit('timer-end');
+        
+        // Callback varsa çalıştır
+        if (this.#options.timer.onTimeup) {
+          await this.#options.timer.onTimeup(this);
+        }
+        
+        // Otomatik kapanma ayarı
+        if (this.#options.timer.closeOnTimeup) {
+          this.hide();
+        }
+      }, this.#options.timer.duration);
+    }
+
+    hide() {
+        if (this.#timeoutId) {
+            clearTimeout(this.#timeoutId);
+            this.#timeoutId = null;
+        }
+
+        // Ticker'ı temizle
+        if (this.#tickerId) {
+            clearInterval(this.#tickerId);
+            this.#tickerId = null;
+        }
 
       this.#isVisible = false;
       this.#element.classList.remove("show");
@@ -413,6 +518,10 @@
       if (this.#options.overlayBlur) {
         document.body.classList.remove('rabbit-modal-blur');
       }
+
+      // State'leri temizle
+      this.#isLoading = false;
+      this.#isProgress = false;
 
       setTimeout(() => {
         if (this.#element && this.#element.parentNode) {
@@ -466,6 +575,9 @@
       this.#buttonCallbacks.clear();
       this.#eventListeners = {};
       this.#isVisible = false;
+
+      // AJAX isteğini iptal et
+      this.abortAjax();
     }
 
     addEventListener(event, callback) {
@@ -478,6 +590,248 @@
 
     static #getVisibleModals() {
       return Array.from(RabbitModal.#instances).filter(modal => modal.#isVisible);
+    }
+
+    // Debug logger
+    #debug(type, message, data = null) {
+      if (!this.#options.debug) return;
+
+      const timestamp = new Date().toISOString();
+      const prefix = `[RabbitModal Debug ${timestamp}]`;
+
+      switch (type) {
+        case 'info':
+          console.info(`${prefix} ℹ️`, message, data || '');
+          break;
+        case 'error':
+          console.error(`${prefix} ❌`, message, data || '');
+          break;
+        case 'warn':
+          console.warn(`${prefix} ⚠️`, message, data || '');
+          break;
+        case 'success':
+          console.log(`${prefix} ✅`, message, data || '');
+          break;
+        case 'event':
+          console.log(`${prefix} 🔔`, message, data || '');
+          break;
+        case 'ajax':
+          console.log(`${prefix} 🔄`, message, data || '');
+          break;
+        default:
+          console.log(`${prefix}`, message, data || '');
+      }
+    }
+
+    // AJAX methodları
+    abortAjax() {
+      if (this.#abortController) {
+        this.#abortController.abort();
+        this.#abortController = null;
+        this.#emit('ajax-abort');
+      }
+      if (this.#ajaxTimeout) {
+        clearTimeout(this.#ajaxTimeout);
+        this.#ajaxTimeout = null;
+      }
+    }
+
+    reloadAjax() {
+      if (this.#options.ajax?.url) {
+        this.#startAjaxRequest();
+      }
+      return this;
+    }
+
+    async #startAjaxRequest() {
+      if (!this.#options.ajax?.url) return;
+
+      // Önceki isteği iptal et
+      this.abortAjax();
+
+      try {
+        // Loading state'ini aktif et
+        this.#isLoading = true;
+        this.#updateProgress();
+
+        // onStart callback
+        if (this.#options.ajax.onStart) {
+          this.#options.ajax.onStart(this, this.#element.querySelector('.rabbit-modal-content'));
+        }
+
+        this.#emit('ajax-start');
+
+        // Delay varsa bekle
+        if (this.#options.ajax.delay) {
+          this.#debug('info', 'AJAX request delayed', { delay: this.#options.ajax.delay });
+          await new Promise(resolve => setTimeout(resolve, this.#options.ajax.delay));
+        }
+
+        // Abort controller
+        this.#abortController = new AbortController();
+
+        // Fetch isteği başlat
+        const fetchPromise = fetch(this.#options.ajax.url, {
+          method: this.#options.ajax.method || 'GET',
+          headers: this.#options.ajax.headers || {},
+          body: this.#options.ajax.data ? JSON.stringify(this.#options.ajax.data) : null,
+          signal: this.#abortController.signal,
+          credentials: this.#options.ajax.credentials || 'same-origin'
+        });
+
+        // Timeout promise
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+          if (this.#options.ajax.timeout) {
+            timeoutId = setTimeout(() => {
+              this.abortAjax();
+              reject(new Error('Request timeout'));
+            }, this.#options.ajax.timeout);
+          }
+        });
+
+        // Race between fetch ve timeout
+        const response = await Promise.race([
+          fetchPromise,
+          timeoutPromise
+        ]).finally(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Response'u parse et
+        const data = await this.#parseResponse(response);
+        this.#debug('success', 'AJAX request successful', { data });
+
+        // onSuccess callback
+        if (this.#options.ajax.onSuccess) {
+          this.#options.ajax.onSuccess(this, data, this.#element.querySelector('.rabbit-modal-content'));
+        }
+
+        this.#emit('ajax-success', data);
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          this.#debug('warn', 'AJAX request aborted');
+          this.#emit('ajax-abort');
+          return;
+        }
+
+        // Retry mekanizması
+        if (this.#options.ajax.retry?.enabled && (!this.#retryCount || this.#retryCount < this.#options.ajax.retry.limit)) {
+          this.#retryCount = (this.#retryCount || 0) + 1;
+          
+          this.#debug('warn', 'AJAX request failed, initiating retry', {
+            error: error.message,
+            currentAttempt: this.#retryCount,
+            maxAttempts: this.#options.ajax.retry.limit,
+            retryDelay: this.#options.ajax.retry.delay,
+            nextAttemptIn: `${this.#options.ajax.retry.delay}ms`
+          });
+
+          await new Promise(resolve => setTimeout(resolve, this.#options.ajax.retry.delay));
+          
+          this.#debug('info', 'Starting retry attempt', {
+            attempt: this.#retryCount,
+            url: this.#options.ajax.url
+          });
+
+          this.#startAjaxRequest();
+          return;
+        }
+
+        // Retry limit aşıldı
+        if (this.#retryCount >= this.#options.ajax.retry.limit) {
+          this.#debug('error', 'AJAX retry limit exceeded', {
+            error: error.message,
+            attempts: this.#retryCount,
+            limit: this.#options.ajax.retry.limit
+          });
+        }
+
+        this.#debug('error', 'AJAX request failed', { error });
+
+        // onError callback
+        if (this.#options.ajax.onError) {
+          this.#options.ajax.onError(this, error, this.#element.querySelector('.rabbit-modal-content'));
+        }
+
+        this.#emit('ajax-error', error);
+      } finally {
+        // Loading state'ini kaldır
+        this.#isLoading = false;
+        
+        // Progress bar kontrolü
+        if (this.#progressBar) {
+          if (this.#isProgress) {
+            this.#updateProgress(); // Timer progress'e geri dön
+          } else {
+            this.#progressBar.style.display = 'none';
+            this.#progressBar.style.width = '0';
+            this.#progressBar.classList.remove('loading');
+          }
+        }
+        
+        // onComplete callback
+        if (this.#options.ajax.onComplete) {
+          this.#options.ajax.onComplete(this, this.#element.querySelector('.rabbit-modal-content'));
+        }
+
+        this.#debug('info', 'AJAX request completed');
+        this.#emit('ajax-complete');
+      }
+    }
+
+    async #parseResponse(response) {
+      const contentType = this.#options.ajax.contentType.toLowerCase();
+      switch (contentType) {
+        case 'json':
+          return await response.json();
+        case 'html':
+          return await response.text();
+        case 'text':
+          return await response.text();
+        default:
+          throw new Error(`Unsupported content type: ${contentType}`);
+      }
+    }
+
+    #updateContent(data) {
+      const content = this.#options.ajax.contentType === 'html' ? data : 
+        (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+      
+      // Modal content'ini güncelle
+      const contentElement = this.#element.querySelector('.rabbit-modal-content');
+      if (contentElement) {
+        contentElement.innerHTML = content;
+      }
+    }
+
+    // Modal elementini döndür
+    getElement() {
+        return this.#element;
+    }
+
+    // Modal içeriğini döndür
+    getContent() {
+        return this.#element?.querySelector('.rabbit-modal-content');
+    }
+
+    // Modal header'ını döndür
+    getHeader() {
+        return this.#element?.querySelector('.rabbit-modal-header');
+    }
+
+    // Modal body'sini döndür
+    getBody() {
+        return this.#element?.querySelector('.rabbit-modal-body');
+    }
+
+    // Modal footer'ını döndür
+    getFooter() {
+        return this.#element?.querySelector('.rabbit-modal-footer');
     }
   }
 

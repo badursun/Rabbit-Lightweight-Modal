@@ -48,7 +48,7 @@
             <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" > <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /> </svg> Position Options </h2>
             <p>Position your modal anywhere on the screen with these pre-defined positions.</p>
             <div class="button-group">
-                <button onclick="runModal('position-options-center.js')">Center</button>
+                <button onclick="runModal('position-options-center.js')">Center <sup>Default</sup></button>
                 <button onclick="runModal('position-options-top.js')">Top</button>
                 <button onclick="runModal('position-options-top-left.js')">Top Left</button>
                 <button onclick="runModal('position-options-top-right.js')">Top Right</button>
@@ -216,7 +216,7 @@
             <div class="button-group">
                 <button onclick="runModal('timer-options-basic.js')">Basic Timer</button>
                 <button onclick="runModal('timer-options-progress.js')">With Progress Bar</button>
-                <button onclick="runModal('timer-options-callback.js')">No Auto-close</button>
+                <button onclick="runModal('timer-options-callback.js')">With Callback <sup>No Auto-close</sup></button>
                 <button onclick="runModal('timer-options-custom.js')">Custom Duration</button>
                 <button onclick="runModal('timer-options-alert.js')">Alert Style</button>
             </div>
@@ -243,15 +243,15 @@
             <h2><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" > <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /> </svg> Dynamic Content</h2>
             <p>Learn how to update modal content dynamically after user interactions.</p>
             <div class="button-group">
-                <button onclick="runModal('dynamic-content-form.js')">Form Submit</button>
-                <button onclick="runModal('dynamic-content-ajax.js')">Ajax Loading</button>
+                <button onclick="runModal('dynamic-content-form.js')">Load HTML</button>
+                <button onclick="runModal('dynamic-content-ajax.js')">Load JSON <sup>With Delay</sup></button>
             </div>
             <div class="code-block">
                 <div class="code-block-header">
                     <div class="code-block-actions">
                         <select onchange="updateExample(this, 'dynamic-content-' + this.value + '.js')" class="code-select" data-type="dynamic-content">
-                            <option value="form">Form Submit Example</option>
-                            <option value="ajax">Ajax Loading Example</option>
+                            <option value="form">Load HTML Example</option>
+                            <option value="ajax">Load JSON Example</option>
                         </select>
                         <button class="copy-button" onclick="copyCode(this)">Copy</button>
                     </div>

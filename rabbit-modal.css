@@ -403,10 +403,52 @@
 }
 
 @media (max-width: 576px) {
-  .rabbit-modal-dialog {
-    width: calc(100% - 1rem) !important;
-    margin: 0.5rem !important;
-  }
+    /* Normal modallar için merkez stili */
+    .rabbit-modal-dialog:not(.left-sidebar):not(.right-sidebar) {
+        position: relative;
+        width: calc(100% - 2rem);
+        max-width: none;
+        margin: 1rem auto;
+        left: 0;
+        top: 0;
+        transform: none;
+        border-radius: var(--rabbit-modal-border-radius);
+    }
+
+    /* Sidebar modallar için tam ekran stili */
+    .rabbit-modal-dialog.left-sidebar,
+    .rabbit-modal-dialog.right-sidebar {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        margin: 0;
+        top: 0;
+        border-radius: 0;
+    }
+
+    .rabbit-modal-dialog.left-sidebar {
+        left: -100%;
+    }
+
+    .rabbit-modal-dialog.right-sidebar {
+        right: -100%;
+    }
+
+    .rabbit-modal.show .rabbit-modal-dialog.left-sidebar {
+        left: 0;
+    }
+
+    .rabbit-modal.show .rabbit-modal-dialog.right-sidebar {
+        right: 0;
+    }
+
+    /* Sidebar content için tam ekran stili */
+    .rabbit-modal-dialog.left-sidebar .rabbit-modal-content,
+    .rabbit-modal-dialog.right-sidebar .rabbit-modal-content {
+        height: 100%;
+        border-radius: 0;
+    }
 }
 
 /* Sidebar specific styles */
@@ -555,13 +597,50 @@
 }
 
 /* Progress Bar */
-.rabbit-modal-progress {
+.rabbit-modal-progress-container {
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   height: 3px;
-  background-color: var(--rabbit-primary);
-  transition: width 0.1s linear;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.rabbit-modal-progress {
+  height: 4px;
+  position:absolute;
+  width: 0;
+  background-color: #4CAF50;
+  transition: width 0.3s ease;
+}
+
+.rabbit-modal-progress.loading {
+  width: 100% !important;
+}
+
+.rabbit-modal-progress.loading .rabbit-modal-progress-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: loading-animation 1.5s infinite;
+}
+
+@keyframes loading-animation {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(400%);
+    }
 }
 
 .rabbit-modal-success .rabbit-modal-progress {
@@ -771,12 +850,4 @@
     border-color: #86b7fe;
     outline: 0;
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-/* Responsive design */
-@media (max-width: 576px) {
-    .rabbit-modal-dialog {
-        max-width: calc(100% - 2rem);
-        margin: 1rem;
-    }
 }
