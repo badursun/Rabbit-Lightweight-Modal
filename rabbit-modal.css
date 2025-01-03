@@ -403,51 +403,71 @@
 }
 
 @media (max-width: 576px) {
-    /* Normal modallar için merkez stili */
-    .rabbit-modal-dialog:not(.left-sidebar):not(.right-sidebar) {
-        position: relative;
-        width: calc(100% - 2rem);
-        max-width: none;
-        margin: 1rem auto;
-        left: 0;
-        top: 0;
-        transform: none;
-        border-radius: var(--rabbit-modal-border-radius);
+    /* Temel modal stili */
+    .rabbit-modal-dialog {
+        width: calc(100% - 2rem) !important;
+        max-width: calc(100% - 2rem) !important;
+        margin: 0 !important;
     }
 
-    /* Sidebar modallar için tam ekran stili */
+    /* Top pozisyonu */
+    .rabbit-modal-dialog.top {
+        top: 1rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) scale(0.95) !important;
+    }
+    
+    .rabbit-modal.show .rabbit-modal-dialog.top {
+        transform: translateX(-50%) scale(1) !important;
+    }
+
+    /* Center pozisyonu */
+    .rabbit-modal-dialog.center {
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) scale(0.95) !important;
+    }
+    
+    .rabbit-modal.show .rabbit-modal-dialog.center {
+        transform: translate(-50%, -50%) scale(1) !important;
+    }
+
+    /* Bottom pozisyonu */
+    .rabbit-modal-dialog.bottom {
+        bottom: 1rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) scale(0.95) !important;
+    }
+    
+    .rabbit-modal.show .rabbit-modal-dialog.bottom {
+        transform: translateX(-50%) scale(1) !important;
+    }
+
+    /* Diğer tüm pozisyonları merkeze alma (left, right, corners) */
+    .rabbit-modal-dialog:not(.top):not(.center):not(.bottom):not(.left-sidebar):not(.right-sidebar) {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%) scale(0.95) !important;
+    }
+
+    .rabbit-modal.show .rabbit-modal-dialog:not(.top):not(.center):not(.bottom):not(.left-sidebar):not(.right-sidebar) {
+        transform: translate(-50%, -50%) scale(1) !important;
+    }
+
+    /* Sidebar modallar için full-width */
     .rabbit-modal-dialog.left-sidebar,
     .rabbit-modal-dialog.right-sidebar {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        max-width: none;
-        margin: 0;
-        top: 0;
-        border-radius: 0;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
-    .rabbit-modal-dialog.left-sidebar {
-        left: -100%;
-    }
-
-    .rabbit-modal-dialog.right-sidebar {
-        right: -100%;
-    }
-
-    .rabbit-modal.show .rabbit-modal-dialog.left-sidebar {
-        left: 0;
-    }
-
-    .rabbit-modal.show .rabbit-modal-dialog.right-sidebar {
-        right: 0;
-    }
-
-    /* Sidebar content için tam ekran stili */
-    .rabbit-modal-dialog.left-sidebar .rabbit-modal-content,
-    .rabbit-modal-dialog.right-sidebar .rabbit-modal-content {
-        height: 100%;
-        border-radius: 0;
+    /* Border radius düzeltmeleri */
+    .rabbit-modal-dialog:not(.left-sidebar):not(.right-sidebar),
+    .rabbit-modal-dialog:not(.left-sidebar):not(.right-sidebar) .rabbit-modal-content {
+        border-radius: var(--rabbit-modal-border-radius) !important;
     }
 }
 
