@@ -1,6 +1,6 @@
-# 🐰 Rabbit Lightweight Modal
+# 🐰 Rabbit Lightweight Multi-Purpose Modal
 
-A lightweight, customizable modal library for modern web applications. No dependencies, just pure JavaScript.
+A lightweight, customizable multi-purpose modal library for modern web applications. No dependencies, just pure JavaScript.
 
 [View Demo](https://badursun.github.io/Rabbit-Lightweight-Modal/)
 
@@ -26,8 +26,8 @@ A lightweight, customizable modal library for modern web applications. No depend
 Just include the CSS and JS files in your HTML:
 
 ```html
-<link rel="stylesheet" href="rabbit-modal.css" />
-<script src="rabbit-modal.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/badursun/Rabbit-Lightweight-Modal@1.2.0/rabbit-modal.css">
+<script src="https://cdn.jsdelivr.net/gh/badursun/Rabbit-Lightweight-Modal@1.2.0/rabbit-modal.min.js"></script>
 ```
 
 ## Basic Usage
