@@ -22,8 +22,6 @@ yarn-error.log
 # Build output
 dist/
 build/
-*.min.js
-*.min.css
 
 # Logs
 *.log
