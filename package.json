@@ -1,0 +1,38 @@
+{
+  "name": "rabbit-lightweight-modal",
+  "version": "1.2.0",
+  "description": "A lightweight, customizable modal library for modern web applications. No dependencies, just pure JavaScript.",
+  "main": "rabbit-modal.min.js",
+  "style": "rabbit-modal.css",
+  "files": [
+    "rabbit-modal.js",
+    "rabbit-modal.min.js",
+    "rabbit-modal.css"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "minify": "terser rabbit-modal.js -c -m -o rabbit-modal.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badursun/Rabbit-Lightweight-Modal.git"
+  },
+  "keywords": [
+    "modal",
+    "dialog",
+    "popup",
+    "lightbox",
+    "lightweight",
+    "vanilla-js",
+    "no-dependencies"
+  ],
+  "author": "Burak Dursun",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/badursun/Rabbit-Lightweight-Modal/issues"
+  },
+  "homepage": "https://github.com/badursun/Rabbit-Lightweight-Modal#readme",
+  "devDependencies": {
+    "terser": "^5.26.0"
+  }
+}

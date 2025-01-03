@@ -691,23 +691,63 @@ modal.show();`;
 
   // Copy code function
   function copyCode(button) {
-    const codeBlock = button.parentElement.nextElementSibling;
-    const code = codeBlock.textContent;
+    // First, try to find the code block
+    let codeBlock;
+    let code = '';
 
-    navigator.clipboard.writeText(code).then(() => {
-      const originalText = button.textContent;
-      button.textContent = "Copied!";
-      button.style.background = "#10b981";
-      button.style.borderColor = "#10b981";
-      button.style.color = "white";
+    // Case 1: Installation inputs
+    const input = button.previousElementSibling;
+    if (input && input.tagName === 'INPUT') {
+      navigator.clipboard.writeText(input.value).then(() => {
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
+        setTimeout(() => {
+          button.innerHTML = originalIcon;
+        }, 2000);
+      });
+      return;
+    }
 
-      setTimeout(() => {
-        button.textContent = originalText;
-        button.style.background = "transparent";
-        button.style.borderColor = "#475569";
-        button.style.color = "#94a3b8";
-      }, 2000);
-    });
+    // Case 2: Example code blocks
+    // First try to find code by ID based on the section
+    const section = button.closest('.demo-section');
+    if (section) {
+      const sectionId = section.querySelector('pre code')?.id;
+      if (sectionId) {
+        codeBlock = document.getElementById(sectionId);
+      }
+    }
+
+    // If not found, try the general approach
+    if (!codeBlock) {
+      const pre = button.parentElement.parentElement.querySelector('pre');
+      if (pre) {
+        codeBlock = pre.querySelector('code');
+      }
+    }
+
+    // Get the code content
+    if (codeBlock) {
+      code = codeBlock.textContent || '';
+    }
+
+    // Copy the code
+    if (code) {
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.textContent;
+        button.textContent = "Copied!";
+        button.style.background = "#10b981";
+        button.style.borderColor = "#10b981";
+        button.style.color = "white";
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = "";
+          button.style.borderColor = "";
+          button.style.color = "";
+        }, 2000);
+      });
+    }
   }
 
   // Run modal from sample file

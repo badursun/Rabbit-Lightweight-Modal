@@ -6,7 +6,7 @@ A lightweight, customizable modal library for modern web applications. No depend
 
 ## Features
 
-- 📦 Lightweight and dependency-free
+- 📦 Lightweight (3.9KB gzipped) and dependency-free
 - 🎨 Multiple size variants (small, default, large, xlarge, cover-page)
 - 📍 Flexible positioning (center, top, right, bottom, left, corners)
 - 🎯 Sidebar support (left and right sliding panels)
@@ -495,6 +495,10 @@ Log Types:
   - All position modals are centered on mobile for better UX
   - Sidebar modals (left-sidebar, right-sidebar) now go full-screen on mobile
   - Added mobile-specific note for position option in documentation
+- **Performance Optimization**
+  - Reduced bundle size to 3.9KB gzipped
+  - Added minified version (rabbit-modal.min.js)
+  - Improved code optimization and compression
 
 ### v1.1.0 (2024-12-31)
 
